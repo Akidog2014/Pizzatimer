@@ -12,6 +12,7 @@
         background: #111;
         color: white;
         margin-top: 100px;
+        user-select: none;
     }
 
     #timer {
@@ -32,6 +33,7 @@
         color: white;
     }
 
+    /* Vollbild-Alarm */
     #alarmOverlay {
         position: fixed;
         top: 0;
@@ -40,7 +42,7 @@
         height: 100%;
         background: red;
         display: none;
-        animation: blink 0.5s infinite;
+        animation: blink 0.4s infinite;
         z-index: 999;
     }
 
@@ -62,6 +64,7 @@
 <script>
 let timeLeft = 30;
 let running = false;
+let alarmActive = false;
 let interval = null;
 
 const timerDisplay = document.getElementById("timer");
@@ -73,7 +76,7 @@ function updateDisplay() {
 }
 
 function startTimer() {
-    if (running) return;
+    if (running || alarmActive) return;
 
     running = true;
     button.textContent = "Stop";
@@ -83,7 +86,6 @@ function startTimer() {
         updateDisplay();
 
         if (timeLeft <= 0) {
-            stopTimer();
             triggerAlarm();
         }
     }, 1000);
@@ -101,20 +103,28 @@ function resetTimer() {
 }
 
 function triggerAlarm() {
+    stopTimer();
+    alarmActive = true;
+
     alarm.style.display = "block";
 
-    // optional: iPhone vibration (wenn erlaubt)
     if (navigator.vibrate) {
         navigator.vibrate([500, 200, 500, 200, 500]);
     }
-
-    setTimeout(() => {
-        alarm.style.display = "none";
-        resetTimer();
-    }, 5000);
 }
 
+// 🔥 Tap irgendwo auf den Bildschirm beendet Alarm
+document.addEventListener("click", () => {
+    if (!alarmActive) return;
+
+    alarmActive = false;
+    alarm.style.display = "none";
+    resetTimer();
+});
+ 
 button.addEventListener("click", () => {
+    if (alarmActive) return;
+
     if (!running) {
         startTimer();
     } else {
