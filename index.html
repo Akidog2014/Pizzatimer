@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Timer App</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background: #111;
+        color: white;
+        margin-top: 100px;
+    }
+
+    #timer {
+        font-size: 80px;
+        margin-bottom: 30px;
+    }
+
+    button {
+        font-size: 24px;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    #startStop {
+        background: #28a745;
+        color: white;
+    }
+
+    #alarmOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: red;
+        display: none;
+        animation: blink 0.5s infinite;
+        z-index: 999;
+    }
+
+    @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+</style>
+</head>
+
+<body>
+
+<div id="alarmOverlay"></div>
+
+<div id="timer">30</div>
+<button id="startStop">Start</button>
+
+<script>
+let timeLeft = 30;
+let running = false;
+let interval = null;
+
+const timerDisplay = document.getElementById("timer");
+const button = document.getElementById("startStop");
+const alarm = document.getElementById("alarmOverlay");
+
+function updateDisplay() {
+    timerDisplay.textContent = timeLeft;
+}
+
+function startTimer() {
+    if (running) return;
+
+    running = true;
+    button.textContent = "Stop";
+
+    interval = setInterval(() => {
+        timeLeft--;
+        updateDisplay();
+
+        if (timeLeft <= 0) {
+            stopTimer();
+            triggerAlarm();
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    running = false;
+    button.textContent = "Start";
+    clearInterval(interval);
+}
+
+function resetTimer() {
+    timeLeft = 30;
+    updateDisplay();
+}
+
+function triggerAlarm() {
+    alarm.style.display = "block";
+
+    // optional: iPhone vibration (wenn erlaubt)
+    if (navigator.vibrate) {
+        navigator.vibrate([500, 200, 500, 200, 500]);
+    }
+
+    setTimeout(() => {
+        alarm.style.display = "none";
+        resetTimer();
+    }, 5000);
+}
+
+button.addEventListener("click", () => {
+    if (!running) {
+        startTimer();
+    } else {
+        stopTimer();
+    }
+});
+
+updateDisplay();
+</script>
+
+</body>
+</html>
