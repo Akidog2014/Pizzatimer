@@ -33,7 +33,6 @@
         color: white;
     }
 
-    /* Vollbild-Alarm */
     #alarmOverlay {
         position: fixed;
         top: 0;
@@ -67,6 +66,8 @@ let running = false;
 let alarmActive = false;
 let interval = null;
 
+let wakeLock = null;
+
 const timerDisplay = document.getElementById("timer");
 const button = document.getElementById("startStop");
 const alarm = document.getElementById("alarmOverlay");
@@ -75,11 +76,38 @@ function updateDisplay() {
     timerDisplay.textContent = timeLeft;
 }
 
+//
+// 🔋 SCREEN WAKE LOCK (Bildschirm bleibt an)
+//
+async function requestWakeLock() {
+    try {
+        if ("wakeLock" in navigator) {
+            wakeLock = await navigator.wakeLock.request("screen");
+
+            wakeLock.addEventListener("release", () => {
+                // falls iOS es freigibt → erneut anfordern
+                if (running) requestWakeLock();
+            });
+        }
+    } catch (err) {
+        console.log("WakeLock nicht verfügbar:", err);
+    }
+}
+
+function releaseWakeLock() {
+    if (wakeLock) {
+        wakeLock.release();
+        wakeLock = null;
+    }
+}
+
 function startTimer() {
     if (running || alarmActive) return;
 
     running = true;
     button.textContent = "Stop";
+
+    requestWakeLock();
 
     interval = setInterval(() => {
         timeLeft--;
@@ -95,6 +123,7 @@ function stopTimer() {
     running = false;
     button.textContent = "Start";
     clearInterval(interval);
+    releaseWakeLock();
 }
 
 function resetTimer() {
@@ -113,7 +142,7 @@ function triggerAlarm() {
     }
 }
 
-// 🔥 Tap irgendwo auf den Bildschirm beendet Alarm
+// Tap irgendwo beendet Alarm
 document.addEventListener("click", () => {
     if (!alarmActive) return;
 
@@ -121,7 +150,7 @@ document.addEventListener("click", () => {
     alarm.style.display = "none";
     resetTimer();
 });
- 
+
 button.addEventListener("click", () => {
     if (alarmActive) return;
 
